@@ -29,6 +29,10 @@
         </f:entry>
 
         <f:advanced>
+            <f:entry title="Displayed Alias in Slack">
+                <f:textbox field="slackJobAlias" name="slackJobAlias" value="${instance.getJobAlias()}" />
+            </f:entry>
+        
             <f:entry title="Notify Repeated Failure">
                 <f:checkbox name="slackNotifyRepeatedFailure" value="true" checked="${instance.getNotifyRepeatedFailure()}"/>
             </f:entry>

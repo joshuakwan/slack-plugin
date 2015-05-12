@@ -278,6 +278,7 @@ public class SlackNotifier extends Notifier {
 		private String teamDomain;
 		private String token;
 		private String room;
+		private String jobAlias;
 		private boolean startNotification;
 		private boolean notifySuccess;
 		private boolean notifyAborted;
@@ -290,7 +291,7 @@ public class SlackNotifier extends Notifier {
 		private boolean showCommitList;
 
 		@DataBoundConstructor
-		public SlackJobProperty(String teamDomain, String token, String room,
+		public SlackJobProperty(String teamDomain, String token, String room, String jobAlias,
 				boolean startNotification, boolean notifyAborted,
 				boolean notifyFailure, boolean notifyNotBuilt,
 				boolean notifySuccess, boolean notifyUnstable,
@@ -299,6 +300,7 @@ public class SlackNotifier extends Notifier {
 			this.teamDomain = teamDomain;
 			this.token = token;
 			this.room = room;
+			this.jobAlias = jobAlias;
 			this.startNotification = startNotification;
 			this.notifyAborted = notifyAborted;
 			this.notifyFailure = notifyFailure;
@@ -324,6 +326,11 @@ public class SlackNotifier extends Notifier {
 		@Exported
 		public String getRoom() {
 			return room;
+		}
+		
+		@Exported
+		public String getJobAlias() {
+			return jobAlias;
 		}
 
 		@Exported
@@ -413,6 +420,7 @@ public class SlackNotifier extends Notifier {
 				return new SlackJobProperty(sr.getParameter("slackTeamDomain"),
 						sr.getParameter("slackToken"),
 						sr.getParameter("slackProjectRoom"),
+						sr.getParameter("slackJobAlias"),
 						sr.getParameter("slackStartNotification") != null,
 						sr.getParameter("slackNotifyAborted") != null,
 						sr.getParameter("slackNotifyFailure") != null,
