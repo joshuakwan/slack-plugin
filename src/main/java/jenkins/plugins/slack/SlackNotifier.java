@@ -36,6 +36,7 @@ public class SlackNotifier extends Notifier {
 	private String buildServerUrl;
 	private String buildServerNick;
 	private String room;
+	private boolean obfuscatorEnabled;
 	private String obfuscatorUrl;
 	private String obfuscatorToken;
 	private String sendAs;
@@ -65,6 +66,10 @@ public class SlackNotifier extends Notifier {
 		return buildServerNick;
 	}
 
+	public boolean getObfuscatorEnabled() {
+		return obfuscatorEnabled;
+	}
+
 	public String getObfuscatorUrl() {
 		return obfuscatorUrl;
 	}
@@ -80,12 +85,14 @@ public class SlackNotifier extends Notifier {
 	@DataBoundConstructor
 	public SlackNotifier(final String teamDomain, final String authToken,
 			final String room, String buildServerUrl, String buildServerNick,
-			String obfuscatorUrl, String obfuscatorToken, final String sendAs) {
+			boolean obfuscatorEnabled, String obfuscatorUrl,
+			String obfuscatorToken, final String sendAs) {
 		super();
 		this.teamDomain = teamDomain;
 		this.authToken = authToken;
 		this.buildServerUrl = buildServerUrl;
 		this.buildServerNick = buildServerNick;
+		this.obfuscatorEnabled = obfuscatorEnabled;
 		this.obfuscatorUrl = obfuscatorUrl;
 		this.obfuscatorToken = obfuscatorToken;
 		this.room = room;
@@ -125,6 +132,7 @@ public class SlackNotifier extends Notifier {
 		this.buildServerUrl = getDescriptor().buildServerUrl;
 		this.buildServerNick = getDescriptor().buildServerNick;
 		this.room = getDescriptor().room;
+		this.obfuscatorEnabled = getDescriptor().obfuscatorEnabled;
 		this.obfuscatorUrl = getDescriptor().obfuscatorUrl;
 		this.obfuscatorToken = getDescriptor().obfuscatorToken;
 		this.sendAs = getDescriptor().sendAs;
@@ -138,6 +146,7 @@ public class SlackNotifier extends Notifier {
 		private String room;
 		private String buildServerUrl;
 		private String buildServerNick;
+		private boolean obfuscatorEnabled;
 		private String obfuscatorUrl;
 		private String obfuscatorToken;
 		private String sendAs;
@@ -164,6 +173,10 @@ public class SlackNotifier extends Notifier {
 
 		public String getBuildServerNick() {
 			return buildServerNick;
+		}
+
+		public boolean getObfuscatorEnabled() {
+			return obfuscatorEnabled;
 		}
 
 		public String getObfuscatorUrl() {
@@ -203,7 +216,8 @@ public class SlackNotifier extends Notifier {
 				sendAs = sr.getParameter("slackSendAs");
 			}
 			return new SlackNotifier(teamDomain, token, room, buildServerUrl,
-					buildServerNick, obfuscatorUrl, obfuscatorToken, sendAs);
+					buildServerNick, obfuscatorEnabled, obfuscatorUrl,
+					obfuscatorToken, sendAs);
 		}
 
 		@Override
@@ -214,6 +228,8 @@ public class SlackNotifier extends Notifier {
 			room = sr.getParameter("slackRoom");
 			buildServerUrl = sr.getParameter("slackBuildServerUrl");
 			buildServerNick = sr.getParameter("slackBuildServerNick");
+			obfuscatorEnabled = Boolean.valueOf(sr
+					.getParameter("obfuscatorEnabled"));
 			obfuscatorUrl = sr.getParameter("obfuscatorUrl");
 			obfuscatorToken = sr.getParameter("obfuscatorToken");
 			sendAs = sr.getParameter("slackSendAs");

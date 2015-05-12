@@ -30,11 +30,16 @@
     <f:validateButton
         title="${%Test Connection}" progress="${%Testing...}"
         method="testConnection" with="slackTeamDomain,slackToken,slackRoom,slackBuildServerUrl,slackBuildServerNick" />
-    <f:entry title="URL Obfuscator URL">
-        <f:textbox field="obfuscatorUrl" name="obfuscatorUrl" value="${descriptor.getObfuscatorUrl()}" />
-    </f:entry> 
-    <f:entry title="URL Obfuscator API Key">
-        <f:textbox field="obfuscatorToken" name="obfuscatorToken" value="${descriptor.getObfuscatorToken()}" />
-    </f:entry> 
+    <f:advanced>
+        <f:entry title="Enable URL Obfuscator">
+            <f:checkbox name="obfuscatorEnabled" value="true" checked="${descriptor.getObfuscatorEnabled()}"/>
+        </f:entry>
+        <f:entry title="URL Obfuscator URL">
+            <f:textbox field="obfuscatorUrl" name="obfuscatorUrl" value="${descriptor.getObfuscatorUrl()}" />
+        </f:entry> 
+        <f:entry title="URL Obfuscator API Key">
+            <f:textbox field="obfuscatorToken" name="obfuscatorToken" value="${descriptor.getObfuscatorToken()}" />
+        </f:entry> 
+    </f:advanced>
   </f:section>
 </j:jelly>
