@@ -60,7 +60,7 @@ public class StandardSlackService implements SlackService {
 
                 json.put("channel", roomId);
                 json.put("attachments", attachments);
-
+                
                 post.addParameter("payload", json.toString());
                 post.getParams().setContentCharset("UTF-8");
                 int responseCode = client.executeMethod(post);

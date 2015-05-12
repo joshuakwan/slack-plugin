@@ -33,6 +33,7 @@ public class SlackNotifier extends Notifier {
     private String teamDomain;
     private String authToken;
     private String buildServerUrl;
+    private String buildServerNick;
     private String room;
     private String sendAs;
 
@@ -56,17 +57,22 @@ public class SlackNotifier extends Notifier {
     public String getBuildServerUrl() {
         return buildServerUrl;
     }
+    
+    public String getBuildServerNick() {
+        return buildServerNick;
+    }
 
     public String getSendAs() {
         return sendAs;
     }
 
     @DataBoundConstructor
-    public SlackNotifier(final String teamDomain, final String authToken, final String room, String buildServerUrl, final String sendAs) {
+    public SlackNotifier(final String teamDomain, final String authToken, final String room, String buildServerUrl, String buildServerNick, final String sendAs) {
         super();
         this.teamDomain = teamDomain;
         this.authToken = authToken;
         this.buildServerUrl = buildServerUrl;
+        this.buildServerNick = buildServerNick;
         this.room = room;
         this.sendAs = sendAs;
     }
@@ -99,6 +105,7 @@ public class SlackNotifier extends Notifier {
         this.teamDomain = getDescriptor().teamDomain;
         this.authToken = getDescriptor().token;
         this.buildServerUrl = getDescriptor().buildServerUrl;
+        this.buildServerNick = getDescriptor().buildServerNick;
         this.room = getDescriptor().room;
         this.sendAs = getDescriptor().sendAs;
     }
@@ -110,6 +117,7 @@ public class SlackNotifier extends Notifier {
         private String token;
         private String room;
         private String buildServerUrl;
+        private String buildServerNick;
         private String sendAs;
 
         public DescriptorImpl() {
@@ -131,6 +139,10 @@ public class SlackNotifier extends Notifier {
         public String getBuildServerUrl() {
             return buildServerUrl;
         }
+        
+        public String getBuildServerNick() {
+            return buildServerNick;
+        }
 
         public String getSendAs() {
             return sendAs;
@@ -151,13 +163,16 @@ public class SlackNotifier extends Notifier {
             if (buildServerUrl == null) {
                 buildServerUrl = sr.getParameter("slackBuildServerUrl");
             }
+            if (buildServerNick == null) {
+            	buildServerNick = sr.getParameter("slackBuildServerNick");
+            }
             if (room == null) {
                 room = sr.getParameter("slackRoom");
             }
             if (sendAs == null) {
                 sendAs = sr.getParameter("slackSendAs");
             }
-            return new SlackNotifier(teamDomain, token, room, buildServerUrl, sendAs);
+            return new SlackNotifier(teamDomain, token, room, buildServerUrl, buildServerNick, sendAs);
         }
 
         @Override
@@ -166,6 +181,7 @@ public class SlackNotifier extends Notifier {
             token = sr.getParameter("slackToken");
             room = sr.getParameter("slackRoom");
             buildServerUrl = sr.getParameter("slackBuildServerUrl");
+            buildServerNick = sr.getParameter("slackBuildServerNick");
             sendAs = sr.getParameter("slackSendAs");
             if (buildServerUrl != null && !buildServerUrl.endsWith("/")) {
                 buildServerUrl = buildServerUrl + "/";
@@ -182,10 +198,11 @@ public class SlackNotifier extends Notifier {
         public FormValidation doTestConnection(@QueryParameter("slackTeamDomain") final String teamDomain,
                 @QueryParameter("slackToken") final String authToken,
                 @QueryParameter("slackRoom") final String room,
-                @QueryParameter("slackBuildServerUrl") final String buildServerUrl) throws FormException {
+                @QueryParameter("slackBuildServerUrl") final String buildServerUrl,
+                @QueryParameter("slackBuildServerNick") final String buildServerNick) throws FormException {
             try {
                 SlackService testSlackService = new StandardSlackService(teamDomain, authToken, room);
-                String message = "Slack/Jenkins plugin: you're all set on " + buildServerUrl;
+                String message = "Slack/Jenkins plugin: you're all set on `" + buildServerNick + "` " + buildServerUrl;
                 boolean success = testSlackService.publish(message, "green");
                 return success ? FormValidation.ok("Success") : FormValidation.error("Failure");
             } catch (Exception e) {
