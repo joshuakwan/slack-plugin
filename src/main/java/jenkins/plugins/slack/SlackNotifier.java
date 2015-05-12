@@ -202,7 +202,13 @@ public class SlackNotifier extends Notifier {
                 @QueryParameter("slackBuildServerNick") final String buildServerNick) throws FormException {
             try {
                 SlackService testSlackService = new StandardSlackService(teamDomain, authToken, room);
-                String message = "Slack/Jenkins plugin: you're all set on `" + buildServerNick + "` " + buildServerUrl;
+                System.out.println("buildServerNick="+buildServerNick);
+                String message;
+                if(!buildServerNick.equals("")){
+                    message = "Slack/Jenkins plugin: you're all set on `" + buildServerNick + "` " + buildServerUrl;
+                }else{
+                	message = "Slack/Jenkins plugin: you're all set on " + buildServerUrl;
+                }
                 boolean success = testSlackService.publish(message, "green");
                 return success ? FormValidation.ok("Success") : FormValidation.error("Failure");
             } catch (Exception e) {
