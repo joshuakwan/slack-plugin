@@ -28,362 +28,405 @@ import org.kohsuke.stapler.export.Exported;
 
 public class SlackNotifier extends Notifier {
 
-    private static final Logger logger = Logger.getLogger(SlackNotifier.class.getName());
+	private static final Logger logger = Logger.getLogger(SlackNotifier.class
+			.getName());
 
-    private String teamDomain;
-    private String authToken;
-    private String buildServerUrl;
-    private String buildServerNick;
-    private String room;
-    private String sendAs;
+	private String teamDomain;
+	private String authToken;
+	private String buildServerUrl;
+	private String buildServerNick;
+	private String room;
+	private String obfuscatorUrl;
+	private String obfuscatorToken;
+	private String sendAs;
 
-    @Override
-    public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl) super.getDescriptor();
-    }
+	@Override
+	public DescriptorImpl getDescriptor() {
+		return (DescriptorImpl) super.getDescriptor();
+	}
 
-    public String getTeamDomain() {
-        return teamDomain;
-    }
+	public String getTeamDomain() {
+		return teamDomain;
+	}
 
-    public String getRoom() {
-        return room;
-    }
+	public String getRoom() {
+		return room;
+	}
 
-    public String getAuthToken() {
-        return authToken;
-    }
+	public String getAuthToken() {
+		return authToken;
+	}
 
-    public String getBuildServerUrl() {
-        return buildServerUrl;
-    }
-    
-    public String getBuildServerNick() {
-        return buildServerNick;
-    }
+	public String getBuildServerUrl() {
+		return buildServerUrl;
+	}
 
-    public String getSendAs() {
-        return sendAs;
-    }
+	public String getBuildServerNick() {
+		return buildServerNick;
+	}
 
-    @DataBoundConstructor
-    public SlackNotifier(final String teamDomain, final String authToken, final String room, String buildServerUrl, String buildServerNick, final String sendAs) {
-        super();
-        this.teamDomain = teamDomain;
-        this.authToken = authToken;
-        this.buildServerUrl = buildServerUrl;
-        this.buildServerNick = buildServerNick;
-        this.room = room;
-        this.sendAs = sendAs;
-    }
+	public String getObfuscatorUrl() {
+		return obfuscatorUrl;
+	}
 
-    public BuildStepMonitor getRequiredMonitorService() {
-        return BuildStepMonitor.BUILD;
-    }
+	public String getObfuscatorToken() {
+		return obfuscatorToken;
+	}
 
-    public SlackService newSlackService(String teamDomain, String token, String projectRoom) {
-        // Settings are passed here from the job, if they are null, use global settings
-        if (teamDomain == null) {
-            teamDomain = getTeamDomain();
-        }
-        if (token == null) {
-            token = getAuthToken();
-        }
-        if (projectRoom == null) {
-            projectRoom = getRoom();
-        }
+	public String getSendAs() {
+		return sendAs;
+	}
 
-        return new StandardSlackService(teamDomain, token, projectRoom);
-    }
+	@DataBoundConstructor
+	public SlackNotifier(final String teamDomain, final String authToken,
+			final String room, String buildServerUrl, String buildServerNick,
+			String obfuscatorUrl, String obfuscatorToken, final String sendAs) {
+		super();
+		this.teamDomain = teamDomain;
+		this.authToken = authToken;
+		this.buildServerUrl = buildServerUrl;
+		this.buildServerNick = buildServerNick;
+		this.obfuscatorUrl = obfuscatorUrl;
+		this.obfuscatorToken = obfuscatorToken;
+		this.room = room;
+		this.sendAs = sendAs;
+	}
 
-    @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
-        return true;
-    }
+	public BuildStepMonitor getRequiredMonitorService() {
+		return BuildStepMonitor.BUILD;
+	}
 
-    public void update() {
-        this.teamDomain = getDescriptor().teamDomain;
-        this.authToken = getDescriptor().token;
-        this.buildServerUrl = getDescriptor().buildServerUrl;
-        this.buildServerNick = getDescriptor().buildServerNick;
-        this.room = getDescriptor().room;
-        this.sendAs = getDescriptor().sendAs;
-    }
+	public SlackService newSlackService(String teamDomain, String token,
+			String projectRoom) {
+		// Settings are passed here from the job, if they are null, use global
+		// settings
+		if (teamDomain == null) {
+			teamDomain = getTeamDomain();
+		}
+		if (token == null) {
+			token = getAuthToken();
+		}
+		if (projectRoom == null) {
+			projectRoom = getRoom();
+		}
 
-    @Extension
-    public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+		return new StandardSlackService(teamDomain, token, projectRoom);
+	}
 
-        private String teamDomain;
-        private String token;
-        private String room;
-        private String buildServerUrl;
-        private String buildServerNick;
-        private String sendAs;
+	@Override
+	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
+			BuildListener listener) throws InterruptedException, IOException {
+		return true;
+	}
 
-        public DescriptorImpl() {
-            load();
-        }
+	public void update() {
+		this.teamDomain = getDescriptor().teamDomain;
+		this.authToken = getDescriptor().token;
+		this.buildServerUrl = getDescriptor().buildServerUrl;
+		this.buildServerNick = getDescriptor().buildServerNick;
+		this.room = getDescriptor().room;
+		this.obfuscatorUrl = getDescriptor().obfuscatorUrl;
+		this.obfuscatorToken = getDescriptor().obfuscatorToken;
+		this.sendAs = getDescriptor().sendAs;
+	}
 
-        public String getTeamDomain() {
-            return teamDomain;
-        }
+	@Extension
+	public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
-        public String getToken() {
-            return token;
-        }
+		private String teamDomain;
+		private String token;
+		private String room;
+		private String buildServerUrl;
+		private String buildServerNick;
+		private String obfuscatorUrl;
+		private String obfuscatorToken;
+		private String sendAs;
 
-        public String getRoom() {
-            return room;
-        }
+		public DescriptorImpl() {
+			load();
+		}
 
-        public String getBuildServerUrl() {
-            return buildServerUrl;
-        }
-        
-        public String getBuildServerNick() {
-            return buildServerNick;
-        }
+		public String getTeamDomain() {
+			return teamDomain;
+		}
 
-        public String getSendAs() {
-            return sendAs;
-        }
+		public String getToken() {
+			return token;
+		}
 
-        public boolean isApplicable(Class<? extends AbstractProject> aClass) {
-            return true;
-        }
+		public String getRoom() {
+			return room;
+		}
 
-        @Override
-        public SlackNotifier newInstance(StaplerRequest sr) {
-            if (teamDomain == null) {
-                teamDomain = sr.getParameter("slackTeamDomain");
-            }
-            if (token == null) {
-                token = sr.getParameter("slackToken");
-            }
-            if (buildServerUrl == null) {
-                buildServerUrl = sr.getParameter("slackBuildServerUrl");
-            }
-            if (buildServerNick == null) {
-            	buildServerNick = sr.getParameter("slackBuildServerNick");
-            }
-            if (room == null) {
-                room = sr.getParameter("slackRoom");
-            }
-            if (sendAs == null) {
-                sendAs = sr.getParameter("slackSendAs");
-            }
-            return new SlackNotifier(teamDomain, token, room, buildServerUrl, buildServerNick, sendAs);
-        }
+		public String getBuildServerUrl() {
+			return buildServerUrl;
+		}
 
-        @Override
-        public boolean configure(StaplerRequest sr, JSONObject formData) throws FormException {
-            teamDomain = sr.getParameter("slackTeamDomain");
-            token = sr.getParameter("slackToken");
-            room = sr.getParameter("slackRoom");
-            buildServerUrl = sr.getParameter("slackBuildServerUrl");
-            buildServerNick = sr.getParameter("slackBuildServerNick");
-            sendAs = sr.getParameter("slackSendAs");
-            if (buildServerUrl != null && !buildServerUrl.endsWith("/")) {
-                buildServerUrl = buildServerUrl + "/";
-            }
-            save();
-            return super.configure(sr, formData);
-        }
+		public String getBuildServerNick() {
+			return buildServerNick;
+		}
 
-        @Override
-        public String getDisplayName() {
-            return "Slack Notifications";
-        }
+		public String getObfuscatorUrl() {
+			return obfuscatorUrl;
+		}
 
-        public FormValidation doTestConnection(@QueryParameter("slackTeamDomain") final String teamDomain,
-                @QueryParameter("slackToken") final String authToken,
-                @QueryParameter("slackRoom") final String room,
-                @QueryParameter("slackBuildServerUrl") final String buildServerUrl,
-                @QueryParameter("slackBuildServerNick") final String buildServerNick) throws FormException {
-            try {
-                SlackService testSlackService = new StandardSlackService(teamDomain, authToken, room);
-                System.out.println("buildServerNick="+buildServerNick);
-                String message;
-                if(!buildServerNick.equals("")){
-                    message = "Slack/Jenkins plugin: you're all set on `" + buildServerNick + "` " + buildServerUrl;
-                }else{
-                	message = "Slack/Jenkins plugin: you're all set on " + buildServerUrl;
-                }
-                boolean success = testSlackService.publish(message, "green");
-                return success ? FormValidation.ok("Success") : FormValidation.error("Failure");
-            } catch (Exception e) {
-                return FormValidation.error("Client error : " + e.getMessage());
-            }
-        }
-    }
+		public String getObfuscatorToken() {
+			return obfuscatorToken;
+		}
 
-    public static class SlackJobProperty extends hudson.model.JobProperty<AbstractProject<?, ?>> {
+		public String getSendAs() {
+			return sendAs;
+		}
 
-        private String teamDomain;
-        private String token;
-        private String room;
-        private boolean startNotification;
-        private boolean notifySuccess;
-        private boolean notifyAborted;
-        private boolean notifyNotBuilt;
-        private boolean notifyUnstable;
-        private boolean notifyFailure;
-        private boolean notifyBackToNormal;
-        private boolean notifyRepeatedFailure;
-        private boolean includeTestSummary;
-        private boolean showCommitList;
+		public boolean isApplicable(Class<? extends AbstractProject> aClass) {
+			return true;
+		}
 
-        @DataBoundConstructor
-        public SlackJobProperty(String teamDomain,
-                String token,
-                String room,
-                boolean startNotification,
-                boolean notifyAborted,
-                boolean notifyFailure,
-                boolean notifyNotBuilt,
-                boolean notifySuccess,
-                boolean notifyUnstable,
-                boolean notifyBackToNormal,
-                boolean notifyRepeatedFailure,
-                boolean includeTestSummary,
-                boolean showCommitList) {
-            this.teamDomain = teamDomain;
-            this.token = token;
-            this.room = room;
-            this.startNotification = startNotification;
-            this.notifyAborted = notifyAborted;
-            this.notifyFailure = notifyFailure;
-            this.notifyNotBuilt = notifyNotBuilt;
-            this.notifySuccess = notifySuccess;
-            this.notifyUnstable = notifyUnstable;
-            this.notifyBackToNormal = notifyBackToNormal;
-            this.notifyRepeatedFailure = notifyRepeatedFailure;
-            this.includeTestSummary = includeTestSummary;
-            this.showCommitList = showCommitList;
-        }
+		@Override
+		public SlackNotifier newInstance(StaplerRequest sr) {
+			if (teamDomain == null) {
+				teamDomain = sr.getParameter("slackTeamDomain");
+			}
+			if (token == null) {
+				token = sr.getParameter("slackToken");
+			}
+			if (buildServerUrl == null) {
+				buildServerUrl = sr.getParameter("slackBuildServerUrl");
+			}
+			if (buildServerNick == null) {
+				buildServerNick = sr.getParameter("slackBuildServerNick");
+			}
+			if (room == null) {
+				room = sr.getParameter("slackRoom");
+			}
+			if (sendAs == null) {
+				sendAs = sr.getParameter("slackSendAs");
+			}
+			return new SlackNotifier(teamDomain, token, room, buildServerUrl,
+					buildServerNick, obfuscatorUrl, obfuscatorToken, sendAs);
+		}
 
-        @Exported
-        public String getTeamDomain() {
-            return teamDomain;
-        }
+		@Override
+		public boolean configure(StaplerRequest sr, JSONObject formData)
+				throws FormException {
+			teamDomain = sr.getParameter("slackTeamDomain");
+			token = sr.getParameter("slackToken");
+			room = sr.getParameter("slackRoom");
+			buildServerUrl = sr.getParameter("slackBuildServerUrl");
+			buildServerNick = sr.getParameter("slackBuildServerNick");
+			obfuscatorUrl = sr.getParameter("obfuscatorUrl");
+			obfuscatorToken = sr.getParameter("obfuscatorToken");
+			sendAs = sr.getParameter("slackSendAs");
+			if (buildServerUrl != null && !buildServerUrl.endsWith("/")) {
+				buildServerUrl = buildServerUrl + "/";
+			}
+			save();
+			return super.configure(sr, formData);
+		}
 
-        @Exported
-        public String getToken() {
-            return token;
-        }
+		@Override
+		public String getDisplayName() {
+			return "Slack Notifications";
+		}
 
-        @Exported
-        public String getRoom() {
-            return room;
-        }
+		public FormValidation doTestConnection(
+				@QueryParameter("slackTeamDomain") final String teamDomain,
+				@QueryParameter("slackToken") final String authToken,
+				@QueryParameter("slackRoom") final String room,
+				@QueryParameter("slackBuildServerUrl") final String buildServerUrl,
+				@QueryParameter("slackBuildServerNick") final String buildServerNick)
+				throws FormException {
+			try {
+				SlackService testSlackService = new StandardSlackService(
+						teamDomain, authToken, room);
+				String message;
+				if (!buildServerNick.equals("")) {
+					message = "Slack/Jenkins plugin: you're all set on `"
+							+ buildServerNick + "` " + buildServerUrl;
+				} else {
+					message = "Slack/Jenkins plugin: you're all set on "
+							+ buildServerUrl;
+				}
+				boolean success = testSlackService.publish(message, "green");
+				return success ? FormValidation.ok("Success") : FormValidation
+						.error("Failure");
+			} catch (Exception e) {
+				return FormValidation.error("Client error : " + e.getMessage());
+			}
+		}
+	}
 
-        @Exported
-        public boolean getStartNotification() {
-            return startNotification;
-        }
+	public static class SlackJobProperty extends
+			hudson.model.JobProperty<AbstractProject<?, ?>> {
 
-        @Exported
-        public boolean getNotifySuccess() {
-            return notifySuccess;
-        }
+		private String teamDomain;
+		private String token;
+		private String room;
+		private boolean startNotification;
+		private boolean notifySuccess;
+		private boolean notifyAborted;
+		private boolean notifyNotBuilt;
+		private boolean notifyUnstable;
+		private boolean notifyFailure;
+		private boolean notifyBackToNormal;
+		private boolean notifyRepeatedFailure;
+		private boolean includeTestSummary;
+		private boolean showCommitList;
 
-        @Exported
-        public boolean getShowCommitList() {
-            return showCommitList;
-        }
+		@DataBoundConstructor
+		public SlackJobProperty(String teamDomain, String token, String room,
+				boolean startNotification, boolean notifyAborted,
+				boolean notifyFailure, boolean notifyNotBuilt,
+				boolean notifySuccess, boolean notifyUnstable,
+				boolean notifyBackToNormal, boolean notifyRepeatedFailure,
+				boolean includeTestSummary, boolean showCommitList) {
+			this.teamDomain = teamDomain;
+			this.token = token;
+			this.room = room;
+			this.startNotification = startNotification;
+			this.notifyAborted = notifyAborted;
+			this.notifyFailure = notifyFailure;
+			this.notifyNotBuilt = notifyNotBuilt;
+			this.notifySuccess = notifySuccess;
+			this.notifyUnstable = notifyUnstable;
+			this.notifyBackToNormal = notifyBackToNormal;
+			this.notifyRepeatedFailure = notifyRepeatedFailure;
+			this.includeTestSummary = includeTestSummary;
+			this.showCommitList = showCommitList;
+		}
 
-        @Override
-        public boolean prebuild(AbstractBuild<?, ?> build, BuildListener listener) {
-            if (startNotification) {
-                Map<Descriptor<Publisher>, Publisher> map = build.getProject().getPublishersList().toMap();
-                for (Publisher publisher : map.values()) {
-                    if (publisher instanceof SlackNotifier) {
-                        logger.info("Invoking Started...");
-                        ((SlackNotifier) publisher).update();
-                        new ActiveNotifier((SlackNotifier) publisher).started(build);
-                    }
-                }
-            }
-            return super.prebuild(build, listener);
-        }
+		@Exported
+		public String getTeamDomain() {
+			return teamDomain;
+		}
 
-        @Exported
-        public boolean getNotifyAborted() {
-            return notifyAborted;
-        }
+		@Exported
+		public String getToken() {
+			return token;
+		}
 
-        @Exported
-        public boolean getNotifyFailure() {
-            return notifyFailure;
-        }
+		@Exported
+		public String getRoom() {
+			return room;
+		}
 
-        @Exported
-        public boolean getNotifyNotBuilt() {
-            return notifyNotBuilt;
-        }
+		@Exported
+		public boolean getStartNotification() {
+			return startNotification;
+		}
 
-        @Exported
-        public boolean getNotifyUnstable() {
-            return notifyUnstable;
-        }
+		@Exported
+		public boolean getNotifySuccess() {
+			return notifySuccess;
+		}
 
-        @Exported
-        public boolean getNotifyBackToNormal() {
-            return notifyBackToNormal;
-        }
+		@Exported
+		public boolean getShowCommitList() {
+			return showCommitList;
+		}
 
-        @Exported
-        public boolean includeTestSummary() {
-            return includeTestSummary;
-        }
+		@Override
+		public boolean prebuild(AbstractBuild<?, ?> build,
+				BuildListener listener) {
+			if (startNotification) {
+				Map<Descriptor<Publisher>, Publisher> map = build.getProject()
+						.getPublishersList().toMap();
+				for (Publisher publisher : map.values()) {
+					if (publisher instanceof SlackNotifier) {
+						logger.info("Invoking Started...");
+						((SlackNotifier) publisher).update();
+						new ActiveNotifier((SlackNotifier) publisher)
+								.started(build);
+					}
+				}
+			}
+			return super.prebuild(build, listener);
+		}
 
-        @Exported
-        public boolean getNotifyRepeatedFailure() {
-            return notifyRepeatedFailure;
-        }
+		@Exported
+		public boolean getNotifyAborted() {
+			return notifyAborted;
+		}
 
-        @Extension
-        public static final class DescriptorImpl extends JobPropertyDescriptor {
+		@Exported
+		public boolean getNotifyFailure() {
+			return notifyFailure;
+		}
 
-            public String getDisplayName() {
-                return "Slack Notifications";
-            }
+		@Exported
+		public boolean getNotifyNotBuilt() {
+			return notifyNotBuilt;
+		}
 
-            @Override
-            public boolean isApplicable(Class<? extends Job> jobType) {
-                return true;
-            }
+		@Exported
+		public boolean getNotifyUnstable() {
+			return notifyUnstable;
+		}
 
-            @Override
-            public SlackJobProperty newInstance(StaplerRequest sr, JSONObject formData) throws hudson.model.Descriptor.FormException {
-                return new SlackJobProperty(
-                        sr.getParameter("slackTeamDomain"),
-                        sr.getParameter("slackToken"),
-                        sr.getParameter("slackProjectRoom"),
-                        sr.getParameter("slackStartNotification") != null,
-                        sr.getParameter("slackNotifyAborted") != null,
-                        sr.getParameter("slackNotifyFailure") != null,
-                        sr.getParameter("slackNotifyNotBuilt") != null,
-                        sr.getParameter("slackNotifySuccess") != null,
-                        sr.getParameter("slackNotifyUnstable") != null,
-                        sr.getParameter("slackNotifyBackToNormal") != null,
-                        sr.getParameter("slackNotifyRepeatedFailure") != null,
-                        sr.getParameter("includeTestSummary") != null,
-                        sr.getParameter("slackShowCommitList") != null);
-            }
+		@Exported
+		public boolean getNotifyBackToNormal() {
+			return notifyBackToNormal;
+		}
 
-            public FormValidation doTestConnection(@QueryParameter("slackTeamDomain") final String teamDomain,
-                    @QueryParameter("slackToken") final String authToken,
-                    @QueryParameter("slackProjectRoom") final String room) throws FormException {
-                try {
-                    SlackService testSlackService = new StandardSlackService(teamDomain, authToken, room);
-                    String message = "Slack/Jenkins plugin: you're all set.";
-                    boolean success = testSlackService.publish(message, "green");
-                    return success ? FormValidation.ok("Success") : FormValidation.error("Failure");
-                } catch (Exception e) {
-                    return FormValidation.error("Client error : " + e.getMessage());
-                }
-            }
-        }
-    }
+		@Exported
+		public boolean includeTestSummary() {
+			return includeTestSummary;
+		}
+
+		@Exported
+		public boolean getNotifyRepeatedFailure() {
+			return notifyRepeatedFailure;
+		}
+
+		@Extension
+		public static final class DescriptorImpl extends JobPropertyDescriptor {
+
+			public String getDisplayName() {
+				return "Slack Notifications";
+			}
+
+			@Override
+			public boolean isApplicable(Class<? extends Job> jobType) {
+				return true;
+			}
+
+			@Override
+			public SlackJobProperty newInstance(StaplerRequest sr,
+					JSONObject formData)
+					throws hudson.model.Descriptor.FormException {
+				return new SlackJobProperty(sr.getParameter("slackTeamDomain"),
+						sr.getParameter("slackToken"),
+						sr.getParameter("slackProjectRoom"),
+						sr.getParameter("slackStartNotification") != null,
+						sr.getParameter("slackNotifyAborted") != null,
+						sr.getParameter("slackNotifyFailure") != null,
+						sr.getParameter("slackNotifyNotBuilt") != null,
+						sr.getParameter("slackNotifySuccess") != null,
+						sr.getParameter("slackNotifyUnstable") != null,
+						sr.getParameter("slackNotifyBackToNormal") != null,
+						sr.getParameter("slackNotifyRepeatedFailure") != null,
+						sr.getParameter("includeTestSummary") != null,
+						sr.getParameter("slackShowCommitList") != null);
+			}
+
+			public FormValidation doTestConnection(
+					@QueryParameter("slackTeamDomain") final String teamDomain,
+					@QueryParameter("slackToken") final String authToken,
+					@QueryParameter("slackProjectRoom") final String room)
+					throws FormException {
+				try {
+					SlackService testSlackService = new StandardSlackService(
+							teamDomain, authToken, room);
+					String message = "Slack/Jenkins plugin: you're all set.";
+					boolean success = testSlackService
+							.publish(message, "green");
+					return success ? FormValidation.ok("Success")
+							: FormValidation.error("Failure");
+				} catch (Exception e) {
+					return FormValidation.error("Client error : "
+							+ e.getMessage());
+				}
+			}
+		}
+	}
 }
