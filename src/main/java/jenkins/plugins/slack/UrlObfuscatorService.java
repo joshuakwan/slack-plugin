@@ -44,16 +44,18 @@ public class UrlObfuscatorService {
 
 		String response = null;
 		try {
+			logger.log(Level.INFO, "Posting " + url + " to " + this.serviceUrl);
 			int responseCode = client.executeMethod(post);
 			response = post.getResponseBodyAsString();
 			if (responseCode != HttpStatus.SC_OK) {
 				logger.log(Level.WARNING,
-						"Slack post may have failed. Response: " + response);
+						"URL Obfuscator post may have failed. Response: "
+								+ response);
 			}
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Error posting to URL Obfuscator", e);
 		} finally {
-			logger.info("Posting succeeded");
+			logger.info("URL Obfuscator posting succeeded");
 			post.releaseConnection();
 		}
 
