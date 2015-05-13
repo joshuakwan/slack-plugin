@@ -13,6 +13,7 @@ import hudson.scm.ChangeLogSet.AffectedFile;
 import hudson.scm.ChangeLogSet.Entry;
 import hudson.tasks.test.AbstractTestResultAction;
 import hudson.triggers.SCMTrigger;
+
 import org.apache.commons.lang.StringUtils;
 
 import java.util.HashSet;
@@ -299,8 +300,17 @@ public class ActiveNotifier implements FineGrainedNotifier {
 		}
 
 		public MessageBuilder appendOpenLink() {
-			String url = notifier.getBuildServerUrl() + build.getUrl();
-			message.append(" (<").append(url).append("|Open>)");
+			String urlToPost = notifier.getBuildServerUrl() + build.getUrl();
+			
+			if (this.notifier.getObfuscatorEnabled()
+					&& !this.notifier.getObfuscatorUrl().equals("")
+					&& !this.notifier.getObfuscatorToken().equals("")) {
+				UrlObfuscatorService urlService = new UrlObfuscatorService(
+						this.notifier.getObfuscatorUrl(), this.notifier.getObfuscatorToken());
+				urlToPost = urlService.getObfuscatedUrl(urlToPost);
+			}
+			
+			message.append(" (<").append(urlToPost).append("|Open>)");
 			return this;
 		}
 
