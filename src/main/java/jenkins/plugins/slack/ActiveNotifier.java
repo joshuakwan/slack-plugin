@@ -1,6 +1,9 @@
 package jenkins.plugins.slack;
 
+import hudson.EnvVars;
 import hudson.Util;
+import hudson.EnvVars;
+import hudson.model.BuildListener;
 import hudson.model.Result;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -13,14 +16,18 @@ import hudson.scm.ChangeLogSet.AffectedFile;
 import hudson.scm.ChangeLogSet.Entry;
 import hudson.tasks.test.AbstractTestResultAction;
 import hudson.triggers.SCMTrigger;
-
+import hudson.util.LogTaskListener;
 import org.apache.commons.lang.StringUtils;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
+
+import static java.util.logging.Level.INFO;
+import static java.util.logging.Level.SEVERE;
 
 @SuppressWarnings("rawtypes")
 public class ActiveNotifier implements FineGrainedNotifier {
@@ -29,10 +36,12 @@ public class ActiveNotifier implements FineGrainedNotifier {
 			.getName());
 
 	SlackNotifier notifier;
+	BuildListener listener;
 
-	public ActiveNotifier(SlackNotifier notifier) {
+	public ActiveNotifier(SlackNotifier notifier, BuildListener listener) {
 		super();
 		this.notifier = notifier;
+		this.listener = listener;
 	}
 
 	private SlackService getSlack(AbstractBuild r) {
@@ -43,6 +52,19 @@ public class ActiveNotifier implements FineGrainedNotifier {
 				SlackNotifier.SlackJobProperty.class).getTeamDomain());
 		String token = Util.fixEmpty(project.getProperty(
 				SlackNotifier.SlackJobProperty.class).getToken());
+
+		EnvVars env = null;
+		try {
+			env = r.getEnvironment(listener);
+		} catch (Exception e) {
+			listener.getLogger().println(
+					"Error retrieving environment vars: " + e.getMessage());
+			env = new EnvVars();
+		}
+		teamDomain = env.expand(teamDomain);
+		token = env.expand(token);
+		projectRoom = env.expand(projectRoom);
+
 		return notifier.newSlackService(teamDomain, token, projectRoom);
 	}
 
@@ -50,6 +72,11 @@ public class ActiveNotifier implements FineGrainedNotifier {
 	}
 
 	public void started(AbstractBuild build) {
+
+		AbstractProject<?, ?> project = build.getProject();
+		SlackNotifier.SlackJobProperty jobProperty = project
+				.getProperty(SlackNotifier.SlackJobProperty.class);
+
 		CauseAction causeAction = build.getAction(CauseAction.class);
 
 		if (causeAction != null) {
@@ -66,7 +93,10 @@ public class ActiveNotifier implements FineGrainedNotifier {
 		if (changes != null) {
 			notifyStart(build, changes);
 		} else {
-			notifyStart(build, getBuildStatusMessage(build, false));
+			notifyStart(
+					build,
+					getBuildStatusMessage(build, false,
+							jobProperty.includeCustomMessage()));
 		}
 	}
 
@@ -115,7 +145,8 @@ public class ActiveNotifier implements FineGrainedNotifier {
 				|| (result == Result.UNSTABLE && jobProperty
 						.getNotifyUnstable())) {
 			getSlack(r).publish(
-					getBuildStatusMessage(r, jobProperty.includeTestSummary()),
+					getBuildStatusMessage(r, jobProperty.includeTestSummary(),
+							jobProperty.includeCustomMessage()),
 					getBuildColor(r));
 			if (jobProperty.getShowCommitList()) {
 				getSlack(r).publish(getCommitList(r), getBuildColor(r));
@@ -202,15 +233,19 @@ public class ActiveNotifier implements FineGrainedNotifier {
 		}
 	}
 
-	String getBuildStatusMessage(AbstractBuild r, boolean includeTestSummary) {
+	String getBuildStatusMessage(AbstractBuild r, boolean includeTestSummary,
+			boolean includeCustomMessage) {
 		MessageBuilder message = new MessageBuilder(notifier, r);
 		message.appendStatusMessage();
 		message.appendDuration();
 		message.appendOpenLink();
-		if (!includeTestSummary) {
-			return message.toString();
+		if (includeTestSummary) {
+			message.appendTestSummary();
 		}
-		return message.appendTestSummary().toString();
+		if (includeCustomMessage) {
+			message.appendCustomMessage();
+		}
+		return message.toString();
 	}
 
 	public static class MessageBuilder {
@@ -301,15 +336,16 @@ public class ActiveNotifier implements FineGrainedNotifier {
 
 		public MessageBuilder appendOpenLink() {
 			String urlToPost = notifier.getBuildServerUrl() + build.getUrl();
-			
+
 			if (this.notifier.getObfuscatorEnabled()
 					&& !this.notifier.getObfuscatorUrl().equals("")
 					&& !this.notifier.getObfuscatorToken().equals("")) {
 				UrlObfuscatorService urlService = new UrlObfuscatorService(
-						this.notifier.getObfuscatorUrl(), this.notifier.getObfuscatorToken());
+						this.notifier.getObfuscatorUrl(),
+						this.notifier.getObfuscatorToken());
 				urlToPost = urlService.getObfuscatedUrl(urlToPost);
 			}
-			
+
 			message.append(" (<").append(urlToPost).append("|Open>)");
 			return this;
 		}
@@ -334,6 +370,24 @@ public class ActiveNotifier implements FineGrainedNotifier {
 			} else {
 				message.append("\nNo Tests found.");
 			}
+			return this;
+		}
+
+		public MessageBuilder appendCustomMessage() {
+			AbstractProject<?, ?> project = build.getProject();
+			String customMessage = Util.fixEmpty(project.getProperty(
+					SlackNotifier.SlackJobProperty.class).getCustomMessage());
+			EnvVars envVars = new EnvVars();
+			try {
+				envVars = build
+						.getEnvironment(new LogTaskListener(logger, INFO));
+			} catch (IOException e) {
+				logger.log(SEVERE, e.getMessage(), e);
+			} catch (InterruptedException e) {
+				logger.log(SEVERE, e.getMessage(), e);
+			}
+			message.append("\n");
+			message.append(envVars.expand(customMessage));
 			return this;
 		}
 

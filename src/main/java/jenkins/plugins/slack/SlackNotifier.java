@@ -206,11 +206,15 @@ public class SlackNotifier extends Notifier {
 			if (buildServerUrl == null) {
 				buildServerUrl = sr.getParameter("slackBuildServerUrl");
 			}
+			if (room == null) {
+				room = sr.getParameter("slackRoom");
+			}
 			if (buildServerNick == null) {
 				buildServerNick = sr.getParameter("slackBuildServerNick");
 			}
 			if (obfuscatorEnabled == false) {
-				obfuscatorEnabled = Boolean.valueOf(sr.getParameter("obfuscatorEnabled"));
+				obfuscatorEnabled = Boolean.valueOf(sr
+						.getParameter("obfuscatorEnabled"));
 			}
 			if (obfuscatorUrl == null) {
 				obfuscatorUrl = sr.getParameter("obfuscatorUrl");
@@ -218,12 +222,10 @@ public class SlackNotifier extends Notifier {
 			if (obfuscatorToken == null) {
 				obfuscatorToken = sr.getParameter("obfuscatorToken");
 			}
-			if (room == null) {
-				room = sr.getParameter("slackRoom");
-			}
 			if (sendAs == null) {
 				sendAs = sr.getParameter("slackSendAs");
 			}
+
 			return new SlackNotifier(teamDomain, token, room, buildServerUrl,
 					buildServerNick, obfuscatorEnabled, obfuscatorUrl,
 					obfuscatorToken, sendAs);
@@ -249,6 +251,11 @@ public class SlackNotifier extends Notifier {
 			return super.configure(sr, formData);
 		}
 
+		SlackService getSlackService(final String teamDomain,
+				final String authToken, final String room) {
+			return new StandardSlackService(teamDomain, authToken, room);
+		}
+
 		@Override
 		public String getDisplayName() {
 			return "Slack Notifications";
@@ -265,15 +272,11 @@ public class SlackNotifier extends Notifier {
 				@QueryParameter("obfuscatorToken") final String obfuscatorToken)
 				throws FormException {
 			try {
-				SlackService testSlackService = new StandardSlackService(
-						teamDomain, authToken, room);
-				String message;
+				SlackService testSlackService = getSlackService(teamDomain,
+						authToken, room);
 
 				String urlToPost = buildServerUrl;
-
-				System.out.println("obfuscatorEnabled: " + obfuscatorEnabled);
-				System.out.println("obfuscatorUrl: " + obfuscatorUrl);
-				System.out.println("obfuscatorToken: " + obfuscatorToken);
+				String message;
 
 				if (obfuscatorEnabled && !obfuscatorUrl.equals("")
 						&& !obfuscatorToken.equals("")) {
@@ -315,6 +318,8 @@ public class SlackNotifier extends Notifier {
 		private boolean notifyRepeatedFailure;
 		private boolean includeTestSummary;
 		private boolean showCommitList;
+		private boolean includeCustomMessage;
+		private String customMessage;
 
 		@DataBoundConstructor
 		public SlackJobProperty(String teamDomain, String token, String room,
@@ -323,7 +328,8 @@ public class SlackNotifier extends Notifier {
 				boolean notifyNotBuilt, boolean notifySuccess,
 				boolean notifyUnstable, boolean notifyBackToNormal,
 				boolean notifyRepeatedFailure, boolean includeTestSummary,
-				boolean showCommitList) {
+				boolean showCommitList, boolean includeCustomMessage,
+				String customMessage) {
 			this.teamDomain = teamDomain;
 			this.token = token;
 			this.room = room;
@@ -338,6 +344,8 @@ public class SlackNotifier extends Notifier {
 			this.notifyRepeatedFailure = notifyRepeatedFailure;
 			this.includeTestSummary = includeTestSummary;
 			this.showCommitList = showCommitList;
+			this.includeCustomMessage = includeCustomMessage;
+			this.customMessage = customMessage;
 		}
 
 		@Exported
@@ -385,7 +393,7 @@ public class SlackNotifier extends Notifier {
 					if (publisher instanceof SlackNotifier) {
 						logger.info("Invoking Started...");
 						((SlackNotifier) publisher).update();
-						new ActiveNotifier((SlackNotifier) publisher)
+						new ActiveNotifier((SlackNotifier) publisher, listener)
 								.started(build);
 					}
 				}
@@ -428,6 +436,16 @@ public class SlackNotifier extends Notifier {
 			return notifyRepeatedFailure;
 		}
 
+		@Exported
+		public boolean includeCustomMessage() {
+			return includeCustomMessage;
+		}
+
+		@Exported
+		public String getCustomMessage() {
+			return customMessage;
+		}
+
 		@Extension
 		public static final class DescriptorImpl extends JobPropertyDescriptor {
 
@@ -457,7 +475,9 @@ public class SlackNotifier extends Notifier {
 						sr.getParameter("slackNotifyBackToNormal") != null,
 						sr.getParameter("slackNotifyRepeatedFailure") != null,
 						sr.getParameter("includeTestSummary") != null,
-						sr.getParameter("slackShowCommitList") != null);
+						sr.getParameter("slackShowCommitList") != null,
+						sr.getParameter("includeCustomMessage") != null,
+						sr.getParameter("customMessage"));
 			}
 
 			public FormValidation doTestConnection(
