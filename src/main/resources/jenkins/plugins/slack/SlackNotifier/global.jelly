@@ -27,9 +27,6 @@
     <f:entry title="Build Server Nick Name" help="${rootURL}/plugin/slack/help-globalConfig-slackBuildServerUrl.html">
         <f:textbox field="buildServerNick" name="slackBuildServerNick" value="${descriptor.getBuildServerNick()}" />
     </f:entry>
-    <f:validateButton
-        title="${%Test Connection}" progress="${%Testing...}"
-        method="testConnection" with="slackTeamDomain,slackToken,slackRoom,slackBuildServerUrl,slackBuildServerNick" />
     <f:advanced>
         <f:entry title="Enable URL Obfuscator">
             <f:checkbox name="obfuscatorEnabled" value="true" checked="${descriptor.getObfuscatorEnabled()}"/>
@@ -41,5 +38,8 @@
             <f:textbox field="obfuscatorToken" name="obfuscatorToken" value="${descriptor.getObfuscatorToken()}" />
         </f:entry> 
     </f:advanced>
+    <f:validateButton
+        title="${%Test Connection}" progress="${%Testing...}"
+        method="testConnection" with="slackTeamDomain,slackToken,slackRoom,slackBuildServerUrl,slackBuildServerNick,obfuscatorEnabled,obfuscatorUrl,obfuscatorToken" />
   </f:section>
 </j:jelly>

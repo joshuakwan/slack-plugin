@@ -60,6 +60,7 @@ public class UrlObfuscatorService {
 		}
 
 		if (response != null) {
+			logger.info("URL Obfuscator response: " + response);
 			JSONObject json = new JSONObject(response);
 			return json.getString("url");
 		} else {

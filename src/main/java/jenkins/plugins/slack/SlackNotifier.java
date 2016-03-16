@@ -206,15 +206,26 @@ public class SlackNotifier extends Notifier {
 			if (buildServerUrl == null) {
 				buildServerUrl = sr.getParameter("slackBuildServerUrl");
 			}
+			if (room == null) {
+				room = sr.getParameter("slackRoom");
+			}
 			if (buildServerNick == null) {
 				buildServerNick = sr.getParameter("slackBuildServerNick");
 			}
-			if (room == null) {
-				room = sr.getParameter("slackRoom");
+			if (obfuscatorEnabled == false) {
+				obfuscatorEnabled = Boolean.valueOf(sr
+						.getParameter("obfuscatorEnabled"));
+			}
+			if (obfuscatorUrl == null) {
+				obfuscatorUrl = sr.getParameter("obfuscatorUrl");
+			}
+			if (obfuscatorToken == null) {
+				obfuscatorToken = sr.getParameter("obfuscatorToken");
 			}
 			if (sendAs == null) {
 				sendAs = sr.getParameter("slackSendAs");
 			}
+
 			return new SlackNotifier(teamDomain, token, room, buildServerUrl,
 					buildServerNick, obfuscatorEnabled, obfuscatorUrl,
 					obfuscatorToken, sendAs);
@@ -240,6 +251,11 @@ public class SlackNotifier extends Notifier {
 			return super.configure(sr, formData);
 		}
 
+		SlackService getSlackService(final String teamDomain,
+				final String authToken, final String room) {
+			return new StandardSlackService(teamDomain, authToken, room);
+		}
+
 		@Override
 		public String getDisplayName() {
 			return "Slack Notifications";
@@ -250,18 +266,31 @@ public class SlackNotifier extends Notifier {
 				@QueryParameter("slackToken") final String authToken,
 				@QueryParameter("slackRoom") final String room,
 				@QueryParameter("slackBuildServerUrl") final String buildServerUrl,
-				@QueryParameter("slackBuildServerNick") final String buildServerNick)
+				@QueryParameter("slackBuildServerNick") final String buildServerNick,
+				@QueryParameter("obfuscatorEnabled") final boolean obfuscatorEnabled,
+				@QueryParameter("obfuscatorUrl") final String obfuscatorUrl,
+				@QueryParameter("obfuscatorToken") final String obfuscatorToken)
 				throws FormException {
 			try {
-				SlackService testSlackService = new StandardSlackService(
-						teamDomain, authToken, room);
+				SlackService testSlackService = getSlackService(teamDomain,
+						authToken, room);
+
+				String urlToPost = buildServerUrl;
 				String message;
+
+				if (obfuscatorEnabled && !obfuscatorUrl.equals("")
+						&& !obfuscatorToken.equals("")) {
+					UrlObfuscatorService urlService = new UrlObfuscatorService(
+							obfuscatorUrl, obfuscatorToken);
+					urlToPost = urlService.getObfuscatedUrl(buildServerUrl);
+				}
+
 				if (!buildServerNick.equals("")) {
 					message = "Slack/Jenkins plugin: you're all set on `"
-							+ buildServerNick + "` " + buildServerUrl;
+							+ buildServerNick + "` " + urlToPost;
 				} else {
 					message = "Slack/Jenkins plugin: you're all set on "
-							+ buildServerUrl;
+							+ urlToPost;
 				}
 				boolean success = testSlackService.publish(message, "green");
 				return success ? FormValidation.ok("Success") : FormValidation
@@ -289,14 +318,18 @@ public class SlackNotifier extends Notifier {
 		private boolean notifyRepeatedFailure;
 		private boolean includeTestSummary;
 		private boolean showCommitList;
+		private boolean includeCustomMessage;
+		private String customMessage;
 
 		@DataBoundConstructor
-		public SlackJobProperty(String teamDomain, String token, String room, String jobAlias,
-				boolean startNotification, boolean notifyAborted,
-				boolean notifyFailure, boolean notifyNotBuilt,
-				boolean notifySuccess, boolean notifyUnstable,
-				boolean notifyBackToNormal, boolean notifyRepeatedFailure,
-				boolean includeTestSummary, boolean showCommitList) {
+		public SlackJobProperty(String teamDomain, String token, String room,
+				String jobAlias, boolean startNotification,
+				boolean notifyAborted, boolean notifyFailure,
+				boolean notifyNotBuilt, boolean notifySuccess,
+				boolean notifyUnstable, boolean notifyBackToNormal,
+				boolean notifyRepeatedFailure, boolean includeTestSummary,
+				boolean showCommitList, boolean includeCustomMessage,
+				String customMessage) {
 			this.teamDomain = teamDomain;
 			this.token = token;
 			this.room = room;
@@ -311,6 +344,8 @@ public class SlackNotifier extends Notifier {
 			this.notifyRepeatedFailure = notifyRepeatedFailure;
 			this.includeTestSummary = includeTestSummary;
 			this.showCommitList = showCommitList;
+			this.includeCustomMessage = includeCustomMessage;
+			this.customMessage = customMessage;
 		}
 
 		@Exported
@@ -327,7 +362,7 @@ public class SlackNotifier extends Notifier {
 		public String getRoom() {
 			return room;
 		}
-		
+
 		@Exported
 		public String getJobAlias() {
 			return jobAlias;
@@ -358,7 +393,7 @@ public class SlackNotifier extends Notifier {
 					if (publisher instanceof SlackNotifier) {
 						logger.info("Invoking Started...");
 						((SlackNotifier) publisher).update();
-						new ActiveNotifier((SlackNotifier) publisher)
+						new ActiveNotifier((SlackNotifier) publisher, listener)
 								.started(build);
 					}
 				}
@@ -401,6 +436,16 @@ public class SlackNotifier extends Notifier {
 			return notifyRepeatedFailure;
 		}
 
+		@Exported
+		public boolean includeCustomMessage() {
+			return includeCustomMessage;
+		}
+
+		@Exported
+		public String getCustomMessage() {
+			return customMessage;
+		}
+
 		@Extension
 		public static final class DescriptorImpl extends JobPropertyDescriptor {
 
@@ -430,7 +475,9 @@ public class SlackNotifier extends Notifier {
 						sr.getParameter("slackNotifyBackToNormal") != null,
 						sr.getParameter("slackNotifyRepeatedFailure") != null,
 						sr.getParameter("includeTestSummary") != null,
-						sr.getParameter("slackShowCommitList") != null);
+						sr.getParameter("slackShowCommitList") != null,
+						sr.getParameter("includeCustomMessage") != null,
+						sr.getParameter("customMessage"));
 			}
 
 			public FormValidation doTestConnection(
